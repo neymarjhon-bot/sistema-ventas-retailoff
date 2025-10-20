@@ -1,0 +1,45 @@
+pipeline {
+    agent any   // Jenkins puede usar cualquier agente disponible
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/usuario/mi-proyecto.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                // Ejemplo con SonarQube
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'mvn deploy'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'target/surefire-reports/*.xml'
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+    }
+}
