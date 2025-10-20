@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven3'   // Nombre configurado en Jenkins
+        jdk 'JDK11'      // Nombre configurado en Jenkins
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/usuario/mi-proyecto.git'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'mvn deploy'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'target/surefire-reports/*.xml'
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+    }
+}
